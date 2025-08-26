@@ -1,0 +1,652 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProxyTunnel - Advanced Web Proxy Server</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                borderRadius: {
+                    lg: "var(--radius)",
+                    md: "calc(var(--radius) - 2px)", 
+                    sm: "calc(var(--radius) - 4px)",
+                },
+                colors: {
+                    background: "var(--background)",
+                    foreground: "var(--foreground)",
+                    card: {
+                        DEFAULT: "var(--card)",
+                        foreground: "var(--card-foreground)",
+                    },
+                    popover: {
+                        DEFAULT: "var(--popover)",
+                        foreground: "var(--popover-foreground)",
+                    },
+                    primary: {
+                        DEFAULT: "var(--primary)",
+                        foreground: "var(--primary-foreground)",
+                    },
+                    secondary: {
+                        DEFAULT: "var(--secondary)",
+                        foreground: "var(--secondary-foreground)",
+                    },
+                    muted: {
+                        DEFAULT: "var(--muted)",
+                        foreground: "var(--muted-foreground)",
+                    },
+                    accent: {
+                        DEFAULT: "var(--accent)",
+                        foreground: "var(--accent-foreground)",
+                    },
+                    destructive: {
+                        DEFAULT: "var(--destructive)",
+                        foreground: "var(--destructive-foreground)",
+                    },
+                    border: "var(--border)",
+                    input: "var(--input)",
+                    ring: "var(--ring)",
+                    chart: {
+                        "1": "var(--chart-1)",
+                        "2": "var(--chart-2)",
+                        "3": "var(--chart-3)",
+                        "4": "var(--chart-4)",
+                        "5": "var(--chart-5)",
+                    }
+                },
+                fontFamily: {
+                    sans: ["Inter", "var(--font-sans)"],
+                }
+            },
+        }
+    };
+    </script>
+    <style>
+        :root {
+            --background: hsl(210 40% 98%);
+            --foreground: hsl(222.2 84% 4.9%);
+            --card: hsl(0 0% 100%);
+            --card-foreground: hsl(222.2 84% 4.9%);
+            --popover: hsl(0 0% 100%);
+            --popover-foreground: hsl(222.2 84% 4.9%);
+            --primary: hsl(221.2 83.2% 53.3%);
+            --primary-foreground: hsl(210 40% 98%);
+            --secondary: hsl(210 40% 96%);
+            --secondary-foreground: hsl(222.2 84% 4.9%);
+            --muted: hsl(210 40% 96%);
+            --muted-foreground: hsl(215.4 16.3% 46.9%);
+            --accent: hsl(210 40% 96%);
+            --accent-foreground: hsl(222.2 84% 4.9%);
+            --destructive: hsl(0 84.2% 60.2%);
+            --destructive-foreground: hsl(210 40% 98%);
+            --border: hsl(214.3 31.8% 91.4%);
+            --input: hsl(214.3 31.8% 91.4%);
+            --ring: hsl(221.2 83.2% 53.3%);
+            --radius: 0.75rem;
+            --chart-1: hsl(12 76% 61%);
+            --chart-2: hsl(173 58% 39%);
+            --chart-3: hsl(197 37% 24%);
+            --chart-4: hsl(43 74% 66%);
+            --chart-5: hsl(27 87% 67%);
+        }
+
+        .dark {
+            --background: hsl(222.2 84% 4.9%);
+            --foreground: hsl(210 40% 98%);
+            --card: hsl(222.2 84% 4.9%);
+            --card-foreground: hsl(210 40% 98%);
+            --popover: hsl(222.2 84% 4.9%);
+            --popover-foreground: hsl(210 40% 98%);
+            --primary: hsl(210 40% 98%);
+            --primary-foreground: hsl(222.2 84% 4.9%);
+            --secondary: hsl(217.2 32.6% 17.5%);
+            --secondary-foreground: hsl(210 40% 98%);
+            --muted: hsl(217.2 32.6% 17.5%);
+            --muted-foreground: hsl(215 20.2% 65.1%);
+            --accent: hsl(217.2 32.6% 17.5%);
+            --accent-foreground: hsl(210 40% 98%);
+            --destructive: hsl(0 62.8% 30.6%);
+            --destructive-foreground: hsl(210 40% 98%);
+            --border: hsl(217.2 32.6% 17.5%);
+            --input: hsl(217.2 32.6% 17.5%);
+            --ring: hsl(212.7 26.8% 83.9%);
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-online {
+            background-color: #10b981;
+        }
+
+        .status-offline {
+            background-color: #ef4444;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .connection-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .connection-card {
+            transition: all 0.2s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-background text-foreground font-sans">
+    
+    <!-- @COMPONENT: Navigation [responsive navigation header] -->
+    <nav class="bg-card border-b border-border sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-shield-alt text-primary text-2xl"></i>
+                        <h1 class="text-xl font-bold text-foreground">ProxyTunnel</h1>
+                    </div>
+                    <span class="text-sm text-muted-foreground hidden sm:inline">Advanced Web Proxy</span>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- @STATE: connectionStatus:boolean = true -->
+                    <div class="flex items-center space-x-2">
+                        <div class="status-indicator status-online" data-bind="connectionStatus"></div>
+                        <span class="text-sm text-muted-foreground hidden sm:inline" data-mock="true">Connected</span>
+                    </div>
+                    
+                    <button class="p-2 hover:bg-secondary rounded-md transition-colors" data-event="click:toggleSettings">
+                        <i class="fas fa-cog text-muted-foreground"></i>
+                    </button>
+                    
+                    <button class="p-2 hover:bg-secondary rounded-md transition-colors md:hidden" data-event="click:toggleMobileMenu">
+                        <i class="fas fa-bars text-muted-foreground"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <!-- @END_COMPONENT: Navigation -->
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- @COMPONENT: ProxyInterface [main proxy input and controls] -->
+        <div class="mb-8">
+            <div class="bg-card rounded-lg border border-border p-6 shadow-sm">
+                <div class="flex flex-col space-y-4">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                        <div class="flex-1 w-full">
+                            <label class="block text-sm font-medium text-foreground mb-2">Enter Website URL</label>
+                            <div class="relative">
+                                <input 
+                                    type="url" 
+                                    placeholder="https://example.com" 
+                                    class="w-full px-4 py-3 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-colors"
+                                    data-event="input:handleUrlInput"
+                                    data-mock="true"
+                                >
+                                <i class="fas fa-globe absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground"></i>
+                            </div>
+                        </div>
+                        
+                        <button class="bg-primary text-primary-foreground px-6 py-3 rounded-md hover:bg-primary/90 transition-colors font-medium flex items-center space-x-2 w-full sm:w-auto justify-center" data-event="click:connectProxy">
+                            <i class="fas fa-arrow-right"></i>
+                            <span>Connect</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Protocol Selection -->
+                    <div class="flex items-center space-x-6">
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="radio" name="protocol" value="http" class="text-primary focus:ring-primary" data-mock="true">
+                            <span class="text-sm text-foreground">HTTP</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="radio" name="protocol" value="https" checked class="text-primary focus:ring-primary" data-mock="true">
+                            <span class="text-sm text-foreground">HTTPS (SSL/TLS)</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input type="checkbox" class="text-primary focus:ring-primary" data-mock="true">
+                            <span class="text-sm text-foreground">Bypass restrictions</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: ProxyInterface -->
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Left Column -->
+            <div class="lg:col-span-2 space-y-6">
+                
+                <!-- @COMPONENT: QuickAccess [popular website shortcuts] -->
+                <div class="bg-card rounded-lg border border-border p-6">
+                    <h3 class="text-lg font-semibold text-foreground mb-4 flex items-center space-x-2">
+                        <i class="fas fa-star text-primary"></i>
+                        <span>Quick Access</span>
+                    </h3>
+                    
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <!-- @MAP: popularSites.map(site => ( -->
+                        <button class="connection-card bg-secondary hover:bg-accent p-3 rounded-md transition-all duration-200 text-center group" data-event="click:connectToSite" data-mock="true">
+                            <i class="fab fa-youtube text-2xl text-red-500 mb-2 group-hover:scale-110 transition-transform"></i>
+                            <p class="text-sm font-medium text-foreground">YouTube</p>
+                        </button>
+                        
+                        <button class="connection-card bg-secondary hover:bg-accent p-3 rounded-md transition-all duration-200 text-center group" data-event="click:connectToSite" data-mock="true">
+                            <i class="fab fa-facebook text-2xl text-blue-600 mb-2 group-hover:scale-110 transition-transform"></i>
+                            <p class="text-sm font-medium text-foreground">Facebook</p>
+                        </button>
+                        
+                        <button class="connection-card bg-secondary hover:bg-accent p-3 rounded-md transition-all duration-200 text-center group" data-event="click:connectToSite" data-mock="true">
+                            <i class="fab fa-twitter text-2xl text-blue-400 mb-2 group-hover:scale-110 transition-transform"></i>
+                            <p class="text-sm font-medium text-foreground">Twitter</p>
+                        </button>
+                        
+                        <button class="connection-card bg-secondary hover:bg-accent p-3 rounded-md transition-all duration-200 text-center group" data-event="click:connectToSite" data-mock="true">
+                            <i class="fab fa-instagram text-2xl text-pink-500 mb-2 group-hover:scale-110 transition-transform"></i>
+                            <p class="text-sm font-medium text-foreground">Instagram</p>
+                        </button>
+                        
+                        <button class="connection-card bg-secondary hover:bg-accent p-3 rounded-md transition-all duration-200 text-center group" data-event="click:connectToSite" data-mock="true">
+                            <i class="fab fa-netflix text-2xl text-red-600 mb-2 group-hover:scale-110 transition-transform"></i>
+                            <p class="text-sm font-medium text-foreground">Netflix</p>
+                        </button>
+                        
+                        <button class="connection-card bg-secondary hover:bg-accent p-3 rounded-md transition-all duration-200 text-center group" data-event="click:connectToSite" data-mock="true">
+                            <i class="fab fa-spotify text-2xl text-green-500 mb-2 group-hover:scale-110 transition-transform"></i>
+                            <p class="text-sm font-medium text-foreground">Spotify</p>
+                        </button>
+                        
+                        <button class="connection-card bg-secondary hover:bg-accent p-3 rounded-md transition-all duration-200 text-center group" data-event="click:connectToSite" data-mock="true">
+                            <i class="fab fa-google text-2xl text-blue-500 mb-2 group-hover:scale-110 transition-transform"></i>
+                            <p class="text-sm font-medium text-foreground">Google</p>
+                        </button>
+                        
+                        <button class="connection-card bg-secondary hover:bg-accent p-3 rounded-md transition-all duration-200 text-center group" data-event="click:connectToSite" data-mock="true">
+                            <i class="fas fa-plus text-2xl text-muted-foreground mb-2 group-hover:scale-110 transition-transform"></i>
+                            <p class="text-sm font-medium text-foreground">Add More</p>
+                        </button>
+                        <!-- @END_MAP )) -->
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: QuickAccess -->
+
+                <!-- @COMPONENT: ActivityLog [connection logs and monitoring] -->
+                <div class="bg-card rounded-lg border border-border p-6">
+                    <h3 class="text-lg font-semibold text-foreground mb-4 flex items-center space-x-2">
+                        <i class="fas fa-list text-primary"></i>
+                        <span>Activity Log</span>
+                        <button class="ml-auto text-sm text-muted-foreground hover:text-foreground" data-event="click:clearLog">
+                            <i class="fas fa-trash mr-1"></i>Clear
+                        </button>
+                    </h3>
+                    
+                    <div class="space-y-3 max-h-80 overflow-y-auto">
+                        <!-- @MAP: activityLog.map(entry => ( -->
+                        <div class="flex items-center justify-between p-3 bg-muted rounded-md" data-mock="true">
+                            <div class="flex items-center space-x-3">
+                                <div class="status-indicator status-online"></div>
+                                <div>
+                                    <p class="text-sm font-medium text-foreground" data-bind="entry.url">https://www.youtube.com</p>
+                                    <p class="text-xs text-muted-foreground" data-bind="entry.timestamp">2 minutes ago</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full" data-bind="entry.status">Connected</span>
+                                <span class="text-xs text-muted-foreground" data-bind="entry.protocol">HTTPS</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-3 bg-muted rounded-md" data-mock="true">
+                            <div class="flex items-center space-x-3">
+                                <div class="status-indicator status-online"></div>
+                                <div>
+                                    <p class="text-sm font-medium text-foreground">https://www.facebook.com</p>
+                                    <p class="text-xs text-muted-foreground">5 minutes ago</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Connected</span>
+                                <span class="text-xs text-muted-foreground">HTTPS</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-3 bg-muted rounded-md" data-mock="true">
+                            <div class="flex items-center space-x-3">
+                                <div class="status-indicator status-offline"></div>
+                                <div>
+                                    <p class="text-sm font-medium text-foreground">https://restricted-site.com</p>
+                                    <p class="text-xs text-muted-foreground">10 minutes ago</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">Failed</span>
+                                <span class="text-xs text-muted-foreground">HTTPS</span>
+                            </div>
+                        </div>
+                        <!-- @END_MAP )) -->
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: ActivityLog -->
+                
+            </div>
+
+            <!-- Right Column -->
+            <div class="space-y-6">
+                
+                <!-- @COMPONENT: ConnectionStatus [current connection details] -->
+                <div class="bg-card rounded-lg border border-border p-6">
+                    <h3 class="text-lg font-semibold text-foreground mb-4 flex items-center space-x-2">
+                        <i class="fas fa-wifi text-primary"></i>
+                        <span>Connection Status</span>
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-muted-foreground">Status</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="status-indicator status-online"></div>
+                                <span class="text-sm font-medium text-green-600" data-bind="connectionStatus" data-mock="true">Online</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-muted-foreground">Your IP</span>
+                            <span class="text-sm font-mono text-foreground" data-bind="userIP" data-mock="true">192.168.1.100</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-muted-foreground">Proxy Server</span>
+                            <span class="text-sm font-mono text-foreground" data-bind="proxyServer" data-mock="true">proxy.tunnel.com</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-muted-foreground">Encryption</span>
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-shield-alt text-green-500 text-xs"></i>
+                                <span class="text-sm font-medium text-green-600" data-mock="true">SSL/TLS</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-muted-foreground">Latency</span>
+                            <span class="text-sm font-medium text-foreground" data-bind="latency" data-mock="true">42ms</span>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-muted-foreground">Data Transfer</span>
+                            <span class="text-sm font-medium text-foreground" data-bind="dataTransfer" data-mock="true">2.4 MB</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: ConnectionStatus -->
+
+                <!-- @COMPONENT: ProxySettings [configuration options] -->
+                <div class="bg-card rounded-lg border border-border p-6">
+                    <h3 class="text-lg font-semibold text-foreground mb-4 flex items-center space-x-2">
+                        <i class="fas fa-sliders-h text-primary"></i>
+                        <span>Proxy Settings</span>
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <!-- @STATE: settings object with various proxy configurations -->
+                        <div class="flex items-center justify-between">
+                            <label class="text-sm text-foreground flex items-center space-x-2">
+                                <span>SSL Verification</span>
+                                <i class="fas fa-info-circle text-muted-foreground text-xs cursor-help" title="Verify SSL certificates"></i>
+                            </label>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" checked class="sr-only peer" data-event="change:toggleSSLVerification" data-mock="true">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/25 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                            </label>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <label class="text-sm text-foreground">Auto-Connect</label>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" class="sr-only peer" data-event="change:toggleAutoConnect" data-mock="true">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/25 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                            </label>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <label class="text-sm text-foreground">Block Ads</label>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" checked class="sr-only peer" data-event="change:toggleAdBlock" data-mock="true">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/25 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                            </label>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <label class="text-sm text-foreground">Enable Logging</label>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" checked class="sr-only peer" data-event="change:toggleLogging" data-mock="true">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/25 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                            </label>
+                        </div>
+                        
+                        <div>
+                            <label class="text-sm text-foreground block mb-2">Connection Timeout</label>
+                            <select class="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm" data-event="change:setConnectionTimeout" data-mock="true">
+                                <option value="5">5 seconds</option>
+                                <option value="10" selected>10 seconds</option>
+                                <option value="30">30 seconds</option>
+                                <option value="60">60 seconds</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="text-sm text-foreground block mb-2">Max Connections</label>
+                            <input type="number" value="5" min="1" max="20" class="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm" data-event="change:setMaxConnections" data-mock="true">
+                        </div>
+                        
+                        <button class="w-full bg-secondary text-secondary-foreground py-2 px-4 rounded-md hover:bg-secondary/80 transition-colors text-sm font-medium" data-event="click:resetSettings">
+                            <i class="fas fa-undo mr-2"></i>Reset to Default
+                        </button>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: ProxySettings -->
+
+                <!-- @COMPONENT: SecurityInfo [SSL/TLS status and security details] -->
+                <div class="bg-card rounded-lg border border-border p-6">
+                    <h3 class="text-lg font-semibold text-foreground mb-4 flex items-center space-x-2">
+                        <i class="fas fa-lock text-primary"></i>
+                        <span>Security Information</span>
+                    </h3>
+                    
+                    <div class="space-y-3">
+                        <div class="flex items-start space-x-3 p-3 bg-green-50 border border-green-200 rounded-md">
+                            <i class="fas fa-shield-alt text-green-500 mt-0.5"></i>
+                            <div>
+                                <p class="text-sm font-medium text-green-800">SSL/TLS Active</p>
+                                <p class="text-xs text-green-600" data-mock="true">Your connection is encrypted and secure</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start space-x-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                            <i class="fas fa-eye-slash text-blue-500 mt-0.5"></i>
+                            <div>
+                                <p class="text-sm font-medium text-blue-800">Anonymous Browsing</p>
+                                <p class="text-xs text-blue-600" data-mock="true">Your real IP address is hidden</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start space-x-3 p-3 bg-orange-50 border border-orange-200 rounded-md">
+                            <i class="fas fa-server text-orange-500 mt-0.5"></i>
+                            <div>
+                                <p class="text-sm font-medium text-orange-800">HTTPS Tunneling</p>
+                                <p class="text-xs text-orange-600" data-mock="true">Using CONNECT method for secure tunneling</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 pt-4 border-t border-border">
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-muted-foreground">Certificate Valid Until</span>
+                            <span class="text-foreground font-mono" data-bind="certExpiry" data-mock="true">Dec 31, 2024</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: SecurityInfo -->
+                
+            </div>
+        </div>
+
+        <!-- @COMPONENT: Footer [additional information and links] -->
+        <footer class="mt-12 py-8 border-t border-border">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+                <div>
+                    <h4 class="text-sm font-semibold text-foreground mb-2">ProxyTunnel</h4>
+                    <p class="text-xs text-muted-foreground max-w-md">Advanced web proxy server with SSL tunneling support, designed for secure and anonymous browsing. Access blocked content safely with enterprise-grade encryption.</p>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-6">
+                    <a href="#" class="text-xs text-muted-foreground hover:text-foreground transition-colors" data-event="click:showPrivacyPolicy">Privacy Policy</a>
+                    <a href="#" class="text-xs text-muted-foreground hover:text-foreground transition-colors" data-event="click:showTerms">Terms of Service</a>
+                    <a href="#" class="text-xs text-muted-foreground hover:text-foreground transition-colors" data-event="click:showSupport">Support</a>
+                    <a href="#" class="text-xs text-muted-foreground hover:text-foreground transition-colors" data-event="click:showDocumentation">Documentation</a>
+                </div>
+            </div>
+            
+            <div class="mt-6 pt-4 border-t border-border text-center">
+                <p class="text-xs text-muted-foreground">© 2025 ProxyTunnel. Built with modern web standards for secure proxy access.</p>
+            </div>
+        </footer>
+        <!-- @END_COMPONENT: Footer -->
+
+    </div>
+
+    <!-- @FUNCTIONALITY: This proxy interface should implement HTTP/HTTPS tunneling, SSL certificate handling, connection management, activity logging, and security features -->
+    <script>
+        // TODO: Implement proxy server connection logic, SSL tunneling via CONNECT method, activity logging, and security features
+        
+        (function() {
+            // Scoped proxy management functionality
+            
+            // Mock data for demonstration
+            const mockData = {
+                connectionStatus: true,
+                userIP: '192.168.1.100',
+                proxyServer: 'proxy.tunnel.com',
+                latency: '42ms',
+                dataTransfer: '2.4 MB',
+                certExpiry: 'Dec 31, 2024'
+            };
+
+            // UI state management
+            let isConnected = true;
+            let currentUrl = '';
+            let activityLog = [];
+            let settings = {
+                sslVerification: true,
+                autoConnect: false,
+                blockAds: true,
+                enableLogging: true,
+                connectionTimeout: 10,
+                maxConnections: 5
+            };
+
+            // Event handlers for proxy functionality
+            function handleUrlInput(event) {
+                currentUrl = event.target.value;
+                // TODO: Validate URL format and prepare for proxy connection
+            }
+
+            function connectProxy() {
+                if (!currentUrl) return;
+                
+                // TODO: Implement actual proxy connection logic
+                // This should handle both HTTP and HTTPS protocols
+                // For HTTPS, implement CONNECT method tunneling
+                console.log('Connecting to:', currentUrl);
+                
+                // Mock connection success
+                addToActivityLog(currentUrl, 'Connected', 'HTTPS');
+                updateConnectionStatus(true);
+            }
+
+            function addToActivityLog(url, status, protocol) {
+                const entry = {
+                    url: url,
+                    status: status,
+                    protocol: protocol,
+                    timestamp: new Date().toLocaleString()
+                };
+                activityLog.unshift(entry);
+                // TODO: Update activity log UI
+            }
+
+            function updateConnectionStatus(connected) {
+                isConnected = connected;
+                // TODO: Update status indicators in UI
+            }
+
+            // Settings management
+            function toggleSetting(settingName) {
+                settings[settingName] = !settings[settingName];
+                // TODO: Apply setting changes to proxy server
+            }
+
+            function resetSettings() {
+                settings = {
+                    sslVerification: true,
+                    autoConnect: false,
+                    blockAds: true,
+                    enableLogging: true,
+                    connectionTimeout: 10,
+                    maxConnections: 5
+                };
+                // TODO: Update UI to reflect reset settings
+            }
+
+            // Quick access site connections
+            function connectToSite(siteName) {
+                const siteUrls = {
+                    'YouTube': 'https://www.youtube.com',
+                    'Facebook': 'https://www.facebook.com',
+                    'Twitter': 'https://www.twitter.com',
+                    'Instagram': 'https://www.instagram.com',
+                    'Netflix': 'https://www.netflix.com',
+                    'Spotify': 'https://www.spotify.com',
+                    'Google': 'https://www.google.com'
+                };
+                
+                const url = siteUrls[siteName];
+                if (url) {
+                    currentUrl = url;
+                    connectProxy();
+                }
+            }
+
+            // Initialize proxy interface
+            function init() {
+                console.log('ProxyTunnel initialized');
+                // TODO: Initialize proxy server connection
+                // TODO: Load saved settings
+                // TODO: Set up SSL certificate verification
+                // TODO: Configure connection timeout and rate limiting
+            }
+
+            // Start the application
+            init();
+        })();
+    </script>
+</body>
+</html>

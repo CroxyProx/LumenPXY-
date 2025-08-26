@@ -1,0 +1,8 @@
+Update project name to LumenPXY across all client and server files
+
+Renames "ProxyTunnel" to "LumenPXY" in the client's index.html and home.tsx, and in the server's proxy.ts, including title tags, headers, and proxy agent strings.
+
+Replit-Commit-Author: Agent
+Replit-Commit-Session-Id: 845d9349-c151-4d86-922b-0b886c7c5f83
+Replit-Commit-Checkpoint-Type: full_checkpoint
+Replit-Commit-Screenshot-Url: https://storage.googleapis.com/screenshot-production-us-central1/2c1c7605-ea13-4fdc-8583-7058c4ece92b/845d9349-c151-4d86-922b-0b886c7c5f83/PXm8BsW

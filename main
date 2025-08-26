@@ -1,0 +1,7 @@
+0000000000000000000000000000000000000000 3213362a44e6145f5f9aa43e3a37e2594d071cb8 29dpatel <46930145-29dpatel@users.noreply.replit.com> 1756232283 +0000	commit (initial): Initial commit
+3213362a44e6145f5f9aa43e3a37e2594d071cb8 621284f58880f9113f1e0d66c9c1a030a3321d2a 29dpatel <46930145-29dpatel@users.noreply.replit.com> 1756232519 +0000	commit: Add foundational components for a web proxy interface
+621284f58880f9113f1e0d66c9c1a030a3321d2a cb8d8591c778065c00349bc07ccccc5c26a57b7a 29dpatel <46930145-29dpatel@users.noreply.replit.com> 1756232765 +0000	commit: Add ability to browse websites through the proxy server
+cb8d8591c778065c00349bc07ccccc5c26a57b7a 891c3738ec183dd0719ecdfa817328336e9b595e 29dpatel <46930145-29dpatel@users.noreply.replit.com> 1756232918 +0000	commit: Improve the server's root page with better styling and usage instructions
+891c3738ec183dd0719ecdfa817328336e9b595e c552bee5882582f427e576e3aea111997ac6b7e0 29dpatel <46930145-29dpatel@users.noreply.replit.com> 1756233128 +0000	commit: Enable in-app browsing of websites through the proxy server
+c552bee5882582f427e576e3aea111997ac6b7e0 f4efb043d7d27af96f6f8dbbcce75a38e6114297 29dpatel <46930145-29dpatel@users.noreply.replit.com> 1756237467 +0000	commit: Improve proxy browsing experience and fix URL handling
+f4efb043d7d27af96f6f8dbbcce75a38e6114297 b57656007ebb017c28ae27ea716d0915fcf0acb0 29dpatel <46930145-29dpatel@users.noreply.replit.com> 1756237844 +0000	commit: Update project name to LumenPXY across all client and server files
